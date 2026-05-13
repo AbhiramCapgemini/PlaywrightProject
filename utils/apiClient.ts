@@ -1,25 +1,14 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const AUTH_FILE = path.resolve(__dirname, '..', 'auth.json');
-
-function getAccessToken(): string {
-  if (fs.existsSync(AUTH_FILE)) {
-    const auth = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf-8')) as { accessToken: string };
-    return auth.accessToken;
-  }
-  return '';
-}
-
-// Base ApiClient — generic HTTP methods with auto Bearer token---------------
-
+// Base ApiClient — generic HTTP methods with auto Bearer token-------------------------
 export class ApiClient {
-  constructor(private request: APIRequestContext) {}
+  constructor(
+    private request: APIRequestContext,
+    private token: string = ''
+  ) {}
 
   private headers(): Record<string, string> {
-    const token = getAccessToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return this.token ? { Authorization: `Bearer ${this.token}` } : {};
   }
 
   get(url: string, params?: Record<string, string | number>) {
@@ -47,7 +36,7 @@ export class ApiClient {
   }
 }
 
-// UsersApi — domain-specific methods for /users endpoints------------------
+// UsersApi — domain-specific methods for /users endpoints-------------------------------
 
 export class UsersApi extends ApiClient {
 
@@ -80,7 +69,7 @@ export class UsersApi extends ApiClient {
   }
 }
 
-// ProductsApi — domain-specific methods for /products endpoints-------------
+// ProductsApi — domain-specific methods for /products endpoints----------------------------
 
 export class ProductsApi extends ApiClient {
 

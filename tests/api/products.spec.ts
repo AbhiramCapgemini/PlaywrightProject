@@ -5,37 +5,33 @@ import { config } from '../../utils/config';
 
 const { validProductId, invalidProductId, productCategory, productSearch, perfBudgetMs, pagination } = config;
 
-// =============================================================================
-// PRODUCTS MODULE
-// =============================================================================
+//PRODUCTS MODULE---------------------------------------------------------------------
+
 test.describe('Products Module', () => {
 
-  // Day 6 — lifecycle hooks
-  test.beforeAll(() => { console.log('▶ Products suite starting'); });
-  test.afterAll(()  => { console.log('◀ Products suite complete'); });
+//lifecycle hooks---------------------------------------------------------------------
+  test.beforeAll(() => { console.log('Products suite starting'); });
+  test.afterAll(()  => { console.log('Products suite complete'); });
 
-  // ---------------------------------------------------------------------------
-  // Day 1 — GET + status + headers + JSON fields
-  // ---------------------------------------------------------------------------
+  //GET + status + headers + JSON fields-----------------------------------------------
   test('@smoke @api GET /products — returns product list', async ({ productsApi }) => {
     const res = await productsApi.listProducts();
-
-    // Day 1 — status + ok
+    
+  //status + ok-------------------------------------------------------------------------
     expect(res.status()).toBe(200);
     expect(res.ok()).toBeTruthy();
 
-    // Day 1 — headers
+  //headers -----------------------------------------------------------------------------
     expect(res.headers()['content-type']).toContain('application/json');
 
-    // Day 3 — deep JSON assertion
+  //deep JSON assertion -----------------------------------------------------------------
     const body = await productsApi.json<{ products: unknown[]; total: number }>(res);
     expect(Array.isArray(body.products)).toBe(true);
     expect(body.products.length).toBeGreaterThan(0);
     expect(typeof body.total).toBe('number');
   });
 
-  // Day 2 — query params: pagination
-  
+  //query params: pagination---------------------------------------------------------------
   test('@regression @api GET /products — pagination limit & skip', async ({ productsApi }) => {
     const res = await productsApi.listProducts(pagination);
     expect(res.status()).toBe(200);
@@ -46,9 +42,7 @@ test.describe('Products Module', () => {
     expect(body.skip).toBe(pagination.skip);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 2 — filter by category
-  // ---------------------------------------------------------------------------
+  //filter by category---------------------------------------------------------------------
   test('@regression @api GET /products/category — filters by category', async ({ productsApi }) => {
     const res = await productsApi.listByCategory(productCategory);
     expect(res.status()).toBe(200);
@@ -60,9 +54,7 @@ test.describe('Products Module', () => {
     }
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 1 — GET by ID + Day 3 — schema assertion
-  // ---------------------------------------------------------------------------
+  //GET by ID + schema assertion------------------------------------------------------------
   test('@smoke @api GET /products/1 — returns correct product', async ({ productsApi }) => {
     const res = await productsApi.getProduct(validProductId);
     expect(res.status()).toBe(200);
@@ -72,14 +64,12 @@ test.describe('Products Module', () => {
     expect(product['id']).toBe(validProductId);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 3 — exhaustive schema validation with toMatchObject + arrayContaining
-  // ---------------------------------------------------------------------------
+  //exhaustive schema validation with toMatchObject + arrayContaining-----------------------
   test('@regression @api GET /products/1 — full schema validation', async ({ productsApi }) => {
     const res = await productsApi.getProduct(validProductId);
     const p   = await productsApi.json<Record<string, unknown>>(res);
 
-    // Day 3 — toMatchObject with expect.any()
+  //toMatchObject with expect.any()---------------------------------------------------------
     expect(p).toMatchObject({
       id:                 expect.any(Number),
       title:              expect.any(String),
@@ -92,15 +82,13 @@ test.describe('Products Module', () => {
       thumbnail:          expect.any(String),
     });
 
-    // Day 3 — arrayContaining
+  //arrayContaining-------------------------------------------------------------------------
     expect(p['images']).toEqual(expect.arrayContaining([expect.any(String)]));
 
     assertProductSchema(p);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 6 — performance budget
-  // ---------------------------------------------------------------------------
+  //performance budget----------------------------------------------------------------------
   test(`@smoke @api GET /products — responds within ${perfBudgetMs}ms`, async ({ productsApi }) => {
     const start   = Date.now();
     const res     = await productsApi.listProducts(pagination);
@@ -119,9 +107,7 @@ test.describe('Products Module', () => {
     expect(elapsed).toBeLessThan(perfBudgetMs);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 2 — search with query params
-  // ---------------------------------------------------------------------------
+  //search with query params----------------------------------------------------------------
   test('@regression @api GET /products/search — returns matching results', async ({ productsApi }) => {
     const res = await productsApi.searchProducts(productSearch);
     expect(res.status()).toBe(200);
@@ -131,9 +117,8 @@ test.describe('Products Module', () => {
     expect(body.products.length).toBeGreaterThan(0);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 2 — negative: invalid ID → 404
-  // ---------------------------------------------------------------------------
+  //negative: invalid ID → 404----------------------------------------------------------------
+
   test('@regression @api GET /products/99999 — returns 404', async ({ productsApi }) => {
     const res = await productsApi.getProduct(invalidProductId);
     expect(res.status()).toBe(404);
@@ -142,9 +127,7 @@ test.describe('Products Module', () => {
     expect(typeof body['message']).toBe('string');
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 1 — GET categories list
-  // ---------------------------------------------------------------------------
+  //GET categories list-----------------------------------------------------------------------
   test('@regression @api GET /products/categories — returns array of categories', async ({ productsApi }) => {
     const res = await productsApi.listCategories();
     expect(res.status()).toBe(200);
@@ -154,24 +137,29 @@ test.describe('Products Module', () => {
     expect(categories.length).toBeGreaterThan(0);
   });
 
-  // ---------------------------------------------------------------------------
-  // Day 2 — POST + Day 3 — toMatchObject + Day 4 — chaining (Create → Get)
-  // ---------------------------------------------------------------------------
+  //POST + toMatchObject + chaining (Create → Get)-------------------------------------------
+
   test('@smoke @api POST /products/add — creates a new product', async ({ productsApi }) => {
     const payload = dataFactory.product();
 
-    // Day 2 — POST
+    //  POST
     const createRes = await productsApi.createProduct(payload);
     expect(createRes.status()).toBe(201);
 
     const product = await productsApi.json<Record<string, unknown>>(createRes);
     expect(typeof product['id']).toBe('number');
 
-    // Day 3 — toMatchObject
+    //  toMatchObject
     expect(product).toMatchObject({
       title: payload.title,
       price: payload.price,
     });
+
+  //expect.poll — keep retrying until product is reflected----------------------------------
+    await expect.poll(async () => {
+      const res = await productsApi.getProduct(product['id'] as number);
+      return res.status();
+    }).toBe(404);
   });
 
 });

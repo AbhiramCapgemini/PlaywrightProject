@@ -2,12 +2,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-  // --- from .env (environment specific) ---
+  // --- from .env (environment specific) -------------------------------------
   baseURL:      process.env['BASE_URL']       ?? 'https://dummyjson.com',
   authUsername: process.env['AUTH_USERNAME']  ?? 'emilys',
   authPassword: process.env['AUTH_PASSWORD']  ?? 'emilyspass',
 
-  // --- test constants (fixed values) ---
+  // --- test constants (fixed values) ----------------------------------------
   validUserId:      1,
   invalidUserId:    99999,
   userSearchQuery:  'John',

@@ -8,7 +8,7 @@ export const dataFactory = {
       lastName:  'User',
       age:       25,
       email:     `test_${uid}@example.com`,
-      phone:     '+1-555-0100',
+      phone:     `+1-555-${uid.toString().slice(-4)}`,
       username:  `testuser_${uid}`,
       password:  'Password123',
       gender:    'male',

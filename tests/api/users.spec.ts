@@ -5,34 +5,31 @@ import { config } from '../../utils/config';
 
 const { validUserId, invalidUserId, userSearchQuery, userPagination } = config;
 
-// USERS MODULE------------------------------------------------------------
-
+// USERS MODULE------------------------------------------------------------------
 test.describe('Users Module', () => {
 
-  //  lifecycle hooks----------------------------------------------------
-  test.beforeAll(() => { console.log('▶ Users suite starting'); });
-  test.afterAll(()  => { console.log('◀ Users suite complete'); });
+// lifecycle hooks---------------------------------------------------------------
+  test.beforeAll(() => { console.log(' Users suite starting'); });
+  test.afterAll(()  => { console.log(' Users suite complete'); });
 
-  // GET + status + headers + JSON fields ------------------------------------
-  
+ // GET + status + headers + JSON fields ----------------------------------------
   test('@smoke @api GET /users/1 — returns valid user schema', async ({ usersApi }) => {
     const res = await usersApi.getUser(validUserId);
-
-    // status + ok ----------------------------------------------------------
+    
+    // status + ok --------------------------------------------------------------
     expect(res.status()).toBe(200);
     expect(res.ok()).toBeTruthy();
 
-    // headers ----------------------------------------------------------------
+    // headers -------------------------------------------------------------------
     expect(res.headers()['content-type']).toContain('application/json');
 
-    // schema assertion------------------------------------------------------
+    // schema assertion-----------------------------------------------------------
     const user = await usersApi.json<Record<string, unknown>>(res);
     assertUserSchema(user);
     expect(user['id']).toBe(validUserId);
   });
 
-  // query params / pagination-----------------------------------------------
-
+  // query params / pagination-----------------------------------------------------
   test('@regression @api GET /users — returns paginated list', async ({ usersApi }) => {
     const res = await usersApi.listUsers(userPagination);
     expect(res.status()).toBe(200);
@@ -44,19 +41,18 @@ test.describe('Users Module', () => {
     expect(body.skip).toBe(userPagination.skip);
   });
 
-  // POST + toMatchObject + chaining (Create → Get)-------------------------------
-
+  //POST + toMatchObject + chaining (Create → Get)-----------------------------------
   test('@smoke @api POST /users/add — creates a new user', async ({ usersApi }) => {
     const payload = dataFactory.user();
 
-  //  POST----------------------------------------------------------------------------
+  //POST------------------------------------------------------------------------------
     const createRes = await usersApi.createUser(payload);
     expect(createRes.status()).toBe(201);
 
     const user = await usersApi.json<Record<string, unknown>>(createRes);
     expect(typeof user['id']).toBe('number');
 
-    // toMatchObject---------------------------------------------------------------------
+    //toMatchObject---------------------------------------------------------------------
     expect(user).toMatchObject({
       firstName: payload.firstName,
       lastName:  payload.lastName,
@@ -64,7 +60,7 @@ test.describe('Users Module', () => {
     });
   });
 
-  // negative: missing required fields--------------------------------------------------
+  //negative: missing required fields--------------------------------------------------
   test('@regression @api POST /users/add — missing firstName validation', async ({ usersApi }) => {
     const res = await usersApi.createUser(dataFactory.user({ firstName: '' }));
     expect(res.status()).toBe(201);
@@ -72,8 +68,7 @@ test.describe('Users Module', () => {
     expect(typeof body['id']).toBe('number');
   });
 
-  // PUT update---------------------------------------------------------------------
-
+  //PUT update---------------------------------------------------------------------
   test('@smoke @api PUT /users/1 — updates firstName', async ({ usersApi }) => {
     const payload = dataFactory.user({ firstName: 'UpdatedName' });
     const res = await usersApi.updateUser(validUserId, payload);
@@ -84,8 +79,7 @@ test.describe('Users Module', () => {
     expect(user['id']).toBe(validUserId);
   });
 
-  // schema assertion after update---------------------------------------------
-
+  //schema assertion after update-------------------------------------------------
   test('@regression @api PUT /users/1 — response satisfies user schema after update', async ({ usersApi }) => {
     const res = await usersApi.updateUser(validUserId, dataFactory.user({ lastName: 'Smith' }));
     expect(res.status()).toBe(200);
@@ -94,8 +88,7 @@ test.describe('Users Module', () => {
     assertUserSchema(user);
   });
 
-  // DELETE-------------------------------------------------------------------------
-
+  //DELETE-------------------------------------------------------------------------
   test('@smoke @api DELETE /users/1 — returns isDeleted flag', async ({ usersApi }) => {
     const res = await usersApi.deleteUser(validUserId);
     expect(res.status()).toBe(200);
@@ -106,8 +99,7 @@ test.describe('Users Module', () => {
     expect(body['id']).toBe(validUserId);
   });
 
-  // negative: invalid ID → 404--------------------------------------------------------
-
+  //negative: invalid ID → 404--------------------------------------------------------
   test('@regression @api GET /users/99999 — returns 404 for non-existent user', async ({ usersApi }) => {
     const res = await usersApi.getUser(invalidUserId);
     expect(res.status()).toBe(404);
@@ -121,8 +113,7 @@ test.describe('Users Module', () => {
     expect(res.status()).toBe(404);
   });
 
-  // search with query params----------------------------------------------------------
-
+  //search with query params----------------------------------------------------------
   test('@regression @api GET /users/search — filters by query', async ({ usersApi }) => {
     const res = await usersApi.searchUsers(userSearchQuery);
     expect(res.status()).toBe(200);
@@ -135,8 +126,7 @@ test.describe('Users Module', () => {
     }
   });
 
-  // auth edge case: protected endpoint with Bearer token----------------------------------
-  
+  //auth edge case: protected endpoint with Bearer token----------------------------------
   test('@regression @api GET /auth/me — returns authenticated user', async ({ usersApi }) => {
     const res = await usersApi.getMe();
     expect([200, 401]).toContain(res.status());

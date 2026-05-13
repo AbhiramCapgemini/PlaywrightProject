@@ -20,7 +20,7 @@ async function globalSetup() {
     if (!health.ok()) {
       throw new Error(`API health check failed — status: ${health.status()}`);
     }
-    console.log(`✅ API is reachable at ${baseURL}`);
+    console.log(` API is reachable at ${baseURL}`);
 
     // ── 2. Login and save token ───────────────────────────────────────────────
     const loginRes = await context.post('/auth/login', {
